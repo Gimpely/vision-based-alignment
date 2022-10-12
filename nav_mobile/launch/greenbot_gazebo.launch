@@ -1,0 +1,32 @@
+<launch>
+
+    <!-- definiraj URDF datoteko -->
+    <param  name="robot_description"
+            textfile="$(find mobile_ar)/urdf/greenhousebot.urdf" />
+  
+
+    <!-- nastavi cas kot cas simulacije -->
+    <param name="/use_sim_time" value="true"/>
+
+     <!-- GAZEBO -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch" />
+    <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model greenbot" />
+
+
+    <!-- robot state publisher -->
+    <node name="robot_state_publisher"
+        pkg="robot_state_publisher" 
+        type="robot_state_publisher"
+        respawn="false" 
+        output="screen">
+            <!-- dodaj namespace -->
+            <remap from="/joint_states" to="/greenbot/joint_states" />
+    </node>
+
+    <!-- RViz -->
+    <!-- <node   name="rviz"
+            pkg="rviz"
+            type="rviz"
+            args="-d $(find mobile_ar)/greenhousebot_rviz.rviz" />  -->
+
+</launch>
