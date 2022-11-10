@@ -813,6 +813,21 @@ class greenbot_safe_control():
             # self.pub.publish(self.vel_msg)
             self.safe_vel_pub.publish(self.vel_msg) 
 
+    ########## Premik v vrsto #######################################################################################
+    def vision_based_movement(self):
+        if self.fwd_first_odom_read:
+            self.odom_start = self.odom.pose.pose.position.x - self.odometry_offset
+            self.odom_pause = self.odom.pose.pose.position.x - self.odometry_offset
+            self.fwd_first_odom_read = False
+
+
+        current_pose = self.odom.pose.pose.position.x - self.odometry_offset
+        print(current_pose)
+        print(self.odom.pose.pose.orientation.x)
+        print(self.odom.pose.pose.orientation.y)
+        print(self.odom.pose.pose.orientation.z)
+        
+
 
     ############ VISION funkcije ####################################################################################
     
@@ -899,15 +914,16 @@ class greenbot_safe_control():
                 elif (self.vel_msg.take_pointcloud == True) and (self.flag_snap == True):
                     print("snap")
                     self.flag_snap = False
-                    source, original = self.pointcloud_object(viz=False, debug=False)
-                    target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2.pcd")
-                    short_target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2_rob.pcd")
-                    short_source = self.findStart(source)
-                    err = self.get_Transformation(short_source, short_target, debug=False, viz=True)
-                    if err:
-                        print("Done")
-                    else:
-                        print("Failed")
+                    self.vision_based_movement()
+                    # source, original = self.pointcloud_object(viz=False, debug=False)
+                    # target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2.pcd")
+                    # short_target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2_rob.pcd")
+                    # short_source = self.findStart(source)
+                    # err = self.get_Transformation(short_source, short_target, debug=False, viz=True)
+                    # if err:
+                    #     print("Done")
+                    # else:
+                    #     print("Failed")
                                 
 
 
