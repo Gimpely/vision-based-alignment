@@ -3,7 +3,7 @@
     <!--roscore
     roslaunch sick_safetyscanners sick_safetyscanners.launch sensor_ip:=192.168.65.213 host_ip:=192.168.65.108      
     -->   
-    
+     
     <!-- PARAMETRI -->
     <!-- to so parametri, ki se jih nastavlja z igralnim plosckom ali pa kar direkt tu notri -->
     <!-- nastavi velocity_gain -->
@@ -16,15 +16,17 @@
     <param name="/end_waiting_time" value="10"/>
 
 
-    <include file="$(find sick_safetyscanners)/launch/sick_safetyscanners.launch" ns="scanner1">
+    <!-- <include file="$(find sick_safetyscanners)/launch/sick_safetyscanners.launch" ns="scanner1">
         <arg name="sensor_ip" value="192.168.65.210" />
         <arg name="host_ip" value="192.168.65.57" />
-    </include>
+    </include> -->
 
     <include file="$(find sick_safetyscanners)/launch/sick_safetyscanners.launch" ns="scanner2">
         <arg name="sensor_ip" value="192.168.65.213" />
         <arg name="host_ip" value="192.168.65.57" />
     </include>
+
+    <include file="$(find pointcloud)/launch/pointcloud.launch"/>
 
  <!-- #   <include file="$(find ublox_gps)/launch/ublox_device1.launch"/> -->
  
@@ -49,10 +51,10 @@
         <param name="default_trig_val" type="bool" value="False"/>
     </node>
     
-    <!-- <node name="scanner1_data" pkg="nav_mobile" type = "scanner1_safety_out.py" output="screen"/> -->
+    <!-- <node name="scanner1_data" pkg="mobile_ar" type = "scanner1_safety_out.py" output="screen"/> -->
     <node name="scanner2_data" pkg="nav_mobile" type = "scanner2_safety_out.py" output="screen"/>    
     <node name="joy_to_cmdvel" pkg="nav_mobile" type = "joy_2_cmd_vel_v2.py" output="screen"/>
-    <node name="sick_class_pub" pkg="nav_mobile" type = "main_node_class_v3.py" output="screen"/>
+    <node name="sick_class_pub" pkg="nav_mobile" type = "main_node_class_v4.py" output="screen"/>
     <node name="my_subscriber_xbox" pkg="nav_mobile" type = "parameters_to_beckhoff.py" output="screen"/>
     <node name="data_from_beckhoff" pkg="nav_mobile" type = "data_from_beckhoff.py" output="screen"/>
     <!-- <node name="computerVision_comm" pkg="nav_mobile" type = "computerVision_comm.py" output="screen"/> -->

@@ -52,6 +52,7 @@ def decode_packet(packet):
     if valid:
         i = 2
         odom_data["vel_L"] = struct.unpack('>f', bytearray([packet[i+3], packet[i+2], packet[i+1], packet[i]]))[0]
+
         i = i + 4
         odom_data["vel_R"] = struct.unpack('>f', bytearray([packet[i+3], packet[i+2], packet[i+1], packet[i]]))[0]
         i = i + 4
@@ -60,6 +61,7 @@ def decode_packet(packet):
         odom_data["ang_vel"] = struct.unpack('>f', bytearray([packet[i+3], packet[i+2], packet[i+1], packet[i]]))[0]
         i = i + 4
         odom_data["x"] = struct.unpack('>f', bytearray([packet[i+3], packet[i+2], packet[i+1], packet[i]]))[0]
+        
         i = i + 4
         odom_data["y"] = struct.unpack('>f', bytearray([packet[i+3], packet[i+2], packet[i+1], packet[i]]))[0]
         i = i + 4
@@ -131,10 +133,17 @@ def talker():
             odo_send.pose.pose.position.y = odom_data["y"]
             
 
-            odo_send.pose.pose.orientation.x = 0
+            odo_send.pose.pose.orientation.x = 0*odom_data["th/pi"] # To ni orientacija okoli X ampak samo
+                                                                    #  uporaba neuporabljene spremenljivke za direktno posiljanje kota
             odo_send.pose.pose.orientation.y = 0
             odo_send.pose.pose.orientation.z = 1 * math.sin(odom_data["th/pi"]/2)
             odo_send.pose.pose.orientation.w = 1 * math.cos(odom_data["th/pi"]/2)
+            # print(info)
+            # print("Vs ", odom_data["lin_vel"], "  Ws ", odom_data["ang_vel"])
+            # print(odom_data["th/pi"], "Z: ", 2*math.asin(odo_send.pose.pose.orientation.z))
+            # print(odom_data["y"])
+            # print("Z: ", odo_send.pose.pose.orientation.z)
+            # print("W: ", odo_send.pose.pose.orientation.w)
 
             odo_send.pose.covariance =     [0.003, 0    , 0    , 0    , 0    , 0    ,
                              0    , 0.003, 0    , 0    , 0    , 0    ,

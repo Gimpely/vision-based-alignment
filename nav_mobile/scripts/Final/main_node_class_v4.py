@@ -34,11 +34,14 @@ class greenbot_safe_control():
         self.flag_old = 999
         self.safety_signal_old2 = Bool()
         self.safety_signal_old = Bool()
+        #FLAGI JAKOB
+        self.onTheMove = 0
+        self.stage = 0
 
         self.flag_snap = True
 
         # self._check_laser1_ready()
-        self._check_laser2_ready()
+        # self._check_laser2_ready()
 
         # if lasers are ok, then p
         rospy.loginfo("The Greenbot is READY!" + "\n")
@@ -86,6 +89,7 @@ class greenbot_safe_control():
         self.odom_middle = 0
         self.end_flag = False
         self.odometry_offset = 0
+        self.odometry_offest_orientation = 0
         self.odometry_offset_updated = False # reset - True, no reset - False
 
         # pausing movement parameters
@@ -332,8 +336,8 @@ class greenbot_safe_control():
         while crit:
             cnt += 1
             result_ransac = self.execute_global_registration(source_down, target_down, source_fpfh, target_fpfh, voxel_size)
-            print(result_ransac.inlier_rmse),
-            print(result_ransac.fitness)
+            # print(result_ransac.inlier_rmse),
+            # print(result_ransac.fitness)
             if debug:
                 self.draw_registration_result(source_down, target_down, result_ransac.transformation)
             if (result_ransac.inlier_rmse < 0.016) and (result_ransac.fitness > 0.4) : ### za 22.6 stopinj dej rmse<0.016 pa fit>0.4
@@ -342,25 +346,24 @@ class greenbot_safe_control():
                 rezult = result_ransac.transformation
                 if viz:
                     self.draw_registration_result(source_down, target_down, result_ransac.transformation)
-                print("\n")
-                print(np.linalg.inv(rezult))
-                print("\n")
+                # print("\n")
+                # print(np.linalg.inv(rezult))
+                # print("\n")
 
                 camera = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2, origin=np.array([0,0,0])) 
                 target.paint_uniform_color([0, 0, 1])
                 camera.transform(np.linalg.inv(rezult))
+                
                 mesh = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.05, origin=np.array([0,0,0]))
                 R = rezult[:3,:3]
                 y_Eu = self.rotationMatrixToEulerAngles(R)[1]
                 z_Eu = self.rotationMatrixToEulerAngles(R)[2]
-                
+
                 q = tr.quaternion_from_matrix(rezult)
 
-                rezult = np.linalg.inv(rezult)
-                trans = rezult[:3, 3]
-                tangAlpha = trans[0]/trans[2]
-                alpha = math.atan(tangAlpha)
-                print(np.rad2deg(alpha))
+                self.trans = rezult[:3, 3]
+                
+                # print(np.rad2deg(alpha))
 
                 # print("Quaternion: ", q)
 
@@ -369,11 +372,11 @@ class greenbot_safe_control():
                 # if viz:
                 #     open3d.visualization.draw_geometries([ camera, source,mesh])
                 crit = False
-                err = True
+                err = False
                 cnt = 0
                 return err
             elif cnt == 10:
-                err = False
+                err = True
                 return err
 
 
@@ -813,19 +816,208 @@ class greenbot_safe_control():
             # self.pub.publish(self.vel_msg)
             self.safe_vel_pub.publish(self.vel_msg) 
 
+    def makeTarget(self, pcl):
+        mesh = open3d.geometry.TriangleMesh.create_coordinate_frame(size=0.4, origin=np.array([0.0, 0.0, 0.0]))
+        open3d.visualization.draw_geometries([pcl, mesh])
+        # points = np.asarray(pcl.points)
+        
+        
+        # origin = open3d.geometry.PointCloud()
+        # origin_coord = np.array([[0,0,0]]) 
+        # origin.points = open3d.utility.Vector3dVector(origin_coord)
+
+        # points = np.asarray(pcl.points)
+        # dists = pcl.compute_point_cloud_distance(origin)
+        # dists = np.asarray(dists)
+        # min_idx = np.argmin(dists)
+        # z = points[min_idx][2]
+
+        # zz = z + 0.25
+        # start = pcl.select_down_sample(np.where(points[:,2] < zz)[0])
+        # open3d.io.write_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/new_target.pcd", pcl)
+        print("saved")
+
+        
+        
+        open3d.visualization.draw_geometries([pcl, mesh])
     ########## Premik v vrsto #######################################################################################
+    def vision_based_orders(self):
+        
+        source, original = self.pointcloud_object(viz=False, debug=False)
+        target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/new_target.pcd")
+        # self.draw_registration_result(source, target, np.identity(4))
+        short_target = self.findStart(target)
+        short_source = self.findStart(source)
+        # self.draw_registration_result(short_source, short_target, np.identity(4))
+        # short_target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2_rob.pcd")
+        
+        err = self.get_Transformation(short_source, short_target, debug=False, viz=False)
+        if not err:
+        #     tangAlpha = self.trans[0]/self.trans[2]
+        #     alpha = math.atan(tangAlpha)
+        #     x = self.trans[0] # TO DO Preveri smeri X in Z in predzank kota
+        #     y = self.trans[2]
+        #     # kot se manjka
+        #     go = True
+        #     return go, x, y
+            print("ok")
+        else:
+        #     go = False
+        #     x = 0
+        #     y = 0
+            print("No good image")
+        go = True
+        x = 0
+        y = 0
+    
+        return go, x, y
+
     def vision_based_movement(self):
+
         if self.fwd_first_odom_read:
-            self.odom_start = self.odom.pose.pose.position.x - self.odometry_offset
-            self.odom_pause = self.odom.pose.pose.position.x - self.odometry_offset
+            
+            self.odometry_offset_x = self.odom.pose.pose.position.x
+            self.odometry_offset_y = self.odom.pose.pose.position.y
+            self.odometry_offest_orientation_z = 2*math.atan2(self.odom.pose.pose.orientation.z,self.odom.pose.pose.orientation.w)
             self.fwd_first_odom_read = False
+            self.fw_running = True
+            
+            
+        current_pose_x = self.odom.pose.pose.position.x - self.odometry_offset_x
+        current_pose_y = self.odom.pose.pose.position.y - self.odometry_offset_y
+        current_orientation = 2*math.atan2(self.odom.pose.pose.orientation.z,self.odom.pose.pose.orientation.w) - self.odometry_offest_orientation_z
+
+        # print("pose x: ", self.odom.pose.pose.position.x,"pose y: ", self.odom.pose.pose.position.y, "orientation: ", 2*math.atan2(self.odom.pose.pose.orientation.z,self.odom.pose.pose.orientation.w))
+        
+        
+        # print("pose x: ", current_pose_x,"pose y: ", current_pose_y, "orientation: ", current_orientation)
+        if self.onTheMove == 1:
+            
+            #Stage 1 je rotacija, stage 2 je premik, stage 3 je spet rotacija
+
+            angle_to_center = self.angle # PREVERI PREDZNAK
+            center_to_pont_angle = math.atan2(self.a,self.b)
+            angle_to_rotate = angle_to_center - center_to_pont_angle
+            endPointX = self.odometry_offset_x + self.b
+            endPointY = self.odometry_offset_y + self.a
+            
+            # d_to_point = math.sqrt((self.a - current_pose_y) ** 2 + (self.b - current_pose_y) ** 2)
+            # print(d_to_point)
+
+            # d_to_point_ref = math.sqrt(math.pow(self.a,2) + math.pow(self.b,2))
+            # d_to_point_rel = math.sqrt(math.pow(current_pose_x,2) + math.pow(current_pose_y,2))
+            # d_to_point =d_to_point_ref - d_to_point_rel
+            # print(d_to_point)
+            
+        ######################################## IMPLEMENTIRAJ DA CE JE STOP PRTRISNJEN  NAJ SE NEHA ZANKA ##############################
+            
+            
+            if self.stage == 0:
+                print("ena")
+                phi_ref =  math.pi/2#angle_to_rotate
+                phi_err = phi_ref - current_orientation
+                sign = np.sign(phi_err)
+                Kphi = 0.1
+                
+                omega = phi_err * Kphi
+                
+                if omega > 0.3:
+                    omega = 0.3
+                if omega < -0.3:
+                    omega = -0.3
+                if omega > -0.05 and sign == -1:
+                    omega = -0.05
+                if omega < 0.05 and sign == 1:
+                    omega = 0.05
+                # print("err", phi_err, "omega: ", omega)
+                self.vel_msg.cmd_vel.linear = Vector3(0.0, 0.0, 0.0)
+                self.vel_msg.cmd_vel.angular = Vector3(0.0, 0.0, omega)
+                self.safe_vel_pub.publish(self.vel_msg)
+                if (abs(phi_err) < 0.00872664626):#sign * angle_to_rotate):
+                    print("dva")
+                    # print("STOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOP rotate")
+                    self.vel_msg.cmd_vel.linear = Vector3(0.0, 0.0, 0.0)
+                    self.vel_msg.cmd_vel.angular = Vector3(0.0, 0.0, 0.0)
+                    # self.fw_running = False
+                    self.safe_vel_pub.publish(self.vel_msg)
+                    # self.stage = 1
+
+                    # self.onTheMove = 0
+                    self.stage = 1
+                    # self.fw_running = False
+
+            if self.stage == 1:
+                print("tri")
+                # print("a", self.a, "b", self.b, "x", current_pose_x, "y", current_pose_y)
+                # d_to_point = math.sqrt((self.a - current_pose_y) ** 2 + (self.b - current_pose_y) ** 2)
+                # print(d_to_point)
+                # d_to_point_ref = math.sqrt(math.pow(self.a,2) + math.pow(self.b,2))
+                # d_to_point_rel = math.sqrt(math.pow(current_pose_x,2) + math.pow(current_pose_y,2))
+                # d_to_point =d_to_point_ref - d_to_point_rel
+                # print(d_to_point)
+                d_to_point= current_pose_x
+                Kd = 0.5
+                speed = d_to_point * Kd
+                
+                if speed > 0.3:
+                    speed = 0.3
+                if speed < 0.01:
+                    speed = 0.01
+                
+                # print("err", d_to_point, "speed: ", speed)
+                self.vel_msg.cmd_vel.linear = Vector3(0.2, 0.0, 0.0)
+                self.vel_msg.cmd_vel.angular = Vector3(0.0, 0.0, 0.0)
+                self.safe_vel_pub.publish(self.vel_msg)
+                if (d_to_point > 1): #PREDZNAK PREMIKA, ce se gor obrne za 180 gre pol v minus "!!!!!!!!!!!"
+                    print("ster")
+                    # print("STOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOP")
+                    self.vel_msg.cmd_vel.linear = Vector3(0.0, 0.0, 0.0)
+                    self.vel_msg.cmd_vel.angular = Vector3(0.0, 0.0, 0.0)
+                    # self.fw_running = False
+                    self.safe_vel_pub.publish(self.vel_msg) 
+                    self.stage = 2
+                    
+            if self.stage == 2:
+                print("pet")
+                phi_ref = -center_to_pont_angle
+                phi_err = phi_ref - current_orientation
+                sign = np.sign(phi_err)
+                Kphi = 0.1
+                omega = phi_err * Kphi
+                if omega > 0.3:
+                    omega = 0.3
+                if omega < -0.3:
+                    omega = -0.3
+                if omega > -0.05 and sign == -1:
+                    omega = -0.05
+                if omega < 0.05 and sign == 1:
+                    omega = 0.05
+                # print("err", phi_err, "omega: ", omega)
+                self.vel_msg.cmd_vel.linear = Vector3(0.0, 0.0, 0.0)
+                self.vel_msg.cmd_vel.angular = Vector3(0.0, 0.0, omega)
+                self.safe_vel_pub.publish(self.vel_msg)
+                if (abs(phi_err) < 0.00872664626):
+                    print("sest")
+                    print("final position")
+                    print("pose x: ", current_pose_x,"pose y: ", current_pose_y, "orientation: ", current_orientation)
+                    # print("STOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOP rotate")
+                    self.vel_msg.cmd_vel.linear = Vector3(0.0, 0.0, 0.0)
+                    self.vel_msg.cmd_vel.angular = Vector3(0.0, 0.0, 0.0)
+                    self.safe_vel_pub.publish(self.vel_msg)
+                    self.flag_snap = True
+                    self.onTheMove = 0
+                    self.stage = 0
+                    self.fw_running = False
 
 
-        current_pose = self.odom.pose.pose.position.x - self.odometry_offset
-        print(current_pose)
-        print(self.odom.pose.pose.orientation.x)
-        print(self.odom.pose.pose.orientation.y)
-        print(self.odom.pose.pose.orientation.z)
+
+            
+            
+                
+
+
+           
+
         
 
 
@@ -910,22 +1102,29 @@ class greenbot_safe_control():
                     if self.flag_pause == 2:
                         self.auto_stop_robot()
 
-                # take a pointcloud
+                
                 elif (self.vel_msg.take_pointcloud == True) and (self.flag_snap == True):
                     print("snap")
                     self.flag_snap = False
+                    # print("Izracunann: ",2*math.asin(self.odom.pose.pose.orientation.z))
+                # take a pointcloud
+                    go, x, y = self.vision_based_orders()
+                    if go:# or not go: # spremeni to na samo if go
+                        self.a = -0.1
+                        self.b = 0.6
+                        self.angle = 0.2617993878
+                        self.onTheMove = 1
+                # # move by pointcloud data    
+                
+                elif self.onTheMove != 0: 
+                    
+                    # onTheMove values:
+                    # 0 : stoped
+                    # (to add moving inforn of the pipes + rotation)
+                    # (to add moving on the pipes and back)
+                    # (to add moving down from the pipes + rotation)
+                    # 1 : guiding on to the pipes               
                     self.vision_based_movement()
-                    # source, original = self.pointcloud_object(viz=False, debug=False)
-                    # target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2.pcd")
-                    # short_target = open3d.io.read_point_cloud("/home/staublixpc/catkin_ws/src/nav_mobile/lab_AGV-main/pcl_targets/target_pointcloud_2_rob.pcd")
-                    # short_source = self.findStart(source)
-                    # err = self.get_Transformation(short_source, short_target, debug=False, viz=True)
-                    # if err:
-                    #     print("Done")
-                    # else:
-                    #     print("Failed")
-                                
-
 
                 # manually stop robot
                 elif (self.vel_msg.stop_run == True):
@@ -949,6 +1148,8 @@ class greenbot_safe_control():
                     
                     # set current odometry offset
                     self.odometry_offset = self.odom.pose.pose.position.x
+                    #Dodal offset orientacije
+                    self.odometry_offest_orientation = self.odom.pose.pose.orientation.x
                     rospy.loginfo("RESET odometry.")
 
                 

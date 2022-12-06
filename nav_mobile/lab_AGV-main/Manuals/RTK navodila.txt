@@ -1,0 +1,8 @@
+Za zagon RTK lokalizacije in izrisovanja poti (Franci):
+Preveri navodila!
+
+Za zagon paketov in gonilnikov RTK:
+1. roslaunch ublox_gps ublox_device1.launch
+
+Zagon skripte namenjene prevajanju podatkov in izrisovanju poti:
+2. rosrun mobile_ar path.py

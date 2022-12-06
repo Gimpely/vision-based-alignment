@@ -61,7 +61,10 @@ def callback(msg):
 	timeStamp = timeStamp + 0.05
 	frame.append(ord('T'))
 	frame.append(ord('T'))
-	
+	# print("twist x: ",str(twist.linear.x) )
+	# print("twist ang z: ",str(twist.angular.z) )
+	# print("twist ang x: ",str(twist.angular.x) )
+
 	#rospy.loginfo("\nVelocities: ")
 	#rospy.loginfo(str(twist.linear.x))
 	#rospy.loginfo(str(twist.angular.z))

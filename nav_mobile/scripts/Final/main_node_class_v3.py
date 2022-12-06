@@ -116,17 +116,17 @@ class greenbot_safe_control():
     def odometry_callback(self, odo_send):
         self.odom = odo_send
 
-    # def _check_laser1_ready(self):
-    #     self.laser_msg1 = None
-    #     rospy.logdebug("Checking Sick NanoScan3 laser...")
-    #     while self.laser_msg1 is None and not rospy.is_shutdown():
-    #         try:
-    #             self.laser_msg1 = rospy.wait_for_message("/scanner1_data", multi_bool, timeout=1.0)
-    #             rospy.logdebug("Current /scanner1_data READY=>" + str(self.laser_msg1))
-    #         except:
-    #             rospy.logerr("Current /scanner1_data not ready yet, retrying for getting scan")
-    #     rospy.loginfo("Checking SICK Nanoscan3 1...DONE")
-    #     return self.laser_msg1
+    def _check_laser1_ready(self):
+        self.laser_msg1 = None
+        rospy.logdebug("Checking Sick NanoScan3 laser...")
+        while self.laser_msg1 is None and not rospy.is_shutdown():
+            try:
+                self.laser_msg1 = rospy.wait_for_message("/scanner1_data", multi_bool, timeout=1.0)
+                rospy.logdebug("Current /scanner1_data READY=>" + str(self.laser_msg1))
+            except:
+                rospy.logerr("Current /scanner1_data not ready yet, retrying for getting scan")
+        rospy.loginfo("Checking SICK Nanoscan3 1...DONE")
+        return self.laser_msg1
 
     def _check_laser2_ready(self):
         self.laser_msg2 = None

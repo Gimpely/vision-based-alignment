@@ -1,0 +1,43 @@
+<launch>
+    
+     <!-- nastavi cas kot cas simulacije -->
+    <param name="/use_sim_time" value="true"/>
+
+    <!-- nalozi fake robota - gazebo -->
+    <include file="$(find mobile_ar)/launch/greenbot_gazebo.launch"/>
+
+    <!-- nastavi velocity_gain -->
+    <param name="/velocity_gain" value="0.5"/>
+    <!-- nastavi insane velocity_gain -->
+    <param name="/insane_velocity_gain" value="3.0"/>
+    <!-- nastavi stopping distance  (v mm na realni platformi, drugace pa v m)-->
+    <param name="/stop_distance" value="1"/>
+    <!-- nastavi potreben cas detektirane ovire za prepoznavo konca vrste -->
+    <param name="/end_waiting_time" value="10"/>
+    
+
+    <!-- zazeni senzorje -->
+    <node name="scanner1_data" pkg="mobile_ar" type = "scanner1_safety_out_v2.py" output="screen"/>
+    <node name="scanner2_data" pkg="mobile_ar" type = "scanner2_safety_out_v2.py" output="screen"/>  
+
+    <!-- zazeni fake vision -->
+    <node name="fake_vision" pkg="mobile_ar" type = "vision_sensor.py" output="screen"/>  
+
+    <!-- zazeni joystick -->
+    <node name="joy_publisher2" pkg="joy" type="joy_node" output="screen">
+        <param name="deadzone" type="double" value="0.05"/>
+        <param name="coalesce_interval" type="double" value="0.06"/>
+        <param name="autorepeat_rate" type="double" value="0.0"/>
+        <param name="default_trig_val" type="bool" value="False"/>
+    </node>
+
+    <!-- <node name="joy_to_joy2" pkg="mobile_ar" type = "joy_to_joy2.py" output="screen"/>  -->
+    <node name="joy_to_cmdvel" pkg="mobile_ar" type = "joy_2_cmd_vel_v2.py" output="screen"/>
+    <node name="sick_class_pub" pkg="mobile_ar" type = "main_node_class_v2.py" output="screen"/>
+
+    <!-- <node name="my_subscriber_xbox" pkg="mobile_ar" type = "parameters_to_beckhoff.py" output="screen"/> -->
+    <!-- <node name="data_from_beckhoff" pkg="mobile_ar" type = "data_from_beckhoff.py" output="screen"/> -->
+    <!-- <node name="computerVision_comm" pkg="mobile_ar" type = "computerVision_comm.py" output="screen"/> -->
+    <!-- <node name="computerVision_comm_test" pkg="mobile_ar" type = "Test.py" output="screen"/> -->
+    
+</launch>

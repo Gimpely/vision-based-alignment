@@ -1,0 +1,33 @@
+<launch>
+    
+    <!--roscore
+    roslaunch sick_safetyscanners sick_safetyscanners.launch sensor_ip:=192.168.65.213 host_ip:=192.168.65.108      
+    -->
+    <include file="$(find sick_safetyscanners)/launch/sick_safetyscanners.launch" ns="scanner2">
+        <arg name="sensor_ip" value="192.168.65.213" />
+        <arg name="host_ip" value="192.168.65.108" />
+    </include>
+    
+  
+
+    <include file="$(find sick_safetyscanners)/launch/sick_safetyscanners.launch" ns="scanner1">
+        <arg name="sensor_ip" value="192.168.65.210" />
+        <arg name="host_ip" value="192.168.65.108" />
+    </include>
+
+ 
+
+    <node name="joy_publisher2" pkg="joy" type="joy_node" output="screen">
+        <param name="deadzone" type="double" value="0.05"/>
+        <param name="coalesce_interval" type="double" value="0.06"/>
+        <param name="autorepeat_rate" type="double" value="0.0"/>
+        <param name="default_trig_val" type="bool" value="False"/>
+    </node>
+    <node name="scanner1_data" pkg="communication" type = "scanner1_safety_outOLD.py" output="screen"/>
+    <node name="scanner2_data" pkg="communication" type = "scanner2_safety_outOLD.py" output="screen"/>    
+    <node name="joy_to_cmdvel" pkg="communication" type = "joy_2_cmd_vel.py" output="screen"/>
+    <node name="sick_class_pub" pkg="communication" type = "main_node_classOLD.py" output="screen"/>
+    <node name="my_subscriber_xbox" pkg="communication" type = "my_subscriber_xbox.py" output="screen"/>
+    <node name="data_from_beckhoff" pkg="communication" type = "data_from_beckhoff.py" output="screen"/>
+    
+</launch>

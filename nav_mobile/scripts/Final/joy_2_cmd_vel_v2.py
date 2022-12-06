@@ -57,6 +57,15 @@ class joy2cmd():
         # RT - reset parameters (gain, distance)
         # LR - insane mode (velocity_gain = 3)
 
+
+        # take pointcloud button
+        if data.buttons[10] == 1:
+            self.msg.take_pointcloud = True
+            # print("Test")
+        else:
+            self.msg.take_pointcloud = False
+
+            
         # manual drive mode
         if data.buttons[4] == 1:
             # set linear velocity
