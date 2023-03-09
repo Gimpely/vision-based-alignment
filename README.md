@@ -1,4 +1,4 @@
-# Mobile platform vision based allignment
+# Mobile platform vision-based alignment
 
 The goal of this project is to implement a vision based navigation solution for a mobile platform navigation inside a greenhouse to transition from a concrete path to parallel heating pipes, which also function as rails for the platform.
 
